@@ -1,17 +1,70 @@
 {
-  "name": "scrapper",
+  "name": "booru-scrapper",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A simple Electron-based application for downloading images from Safebooru with real-time progress tracking",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "dist": "npm run build",
+    "postinstall": "electron-builder install-app-deps"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "electron",
+    "scrapper",
+    "booru",
+    "image-downloader",
+    "safebooru",
+    "batch-download"
+  ],
+  "author": {
+    "name": "Paulo",
+    "email": "your-email@example.com",
+    "url": "https://github.com/paulof9"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/paulof9/webscrap-booru#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paulof9/webscrap-booru.git"
+  },
+  "bugs": {
+    "url": "https://github.com/paulof9/webscrap-booru/issues"
+  },
   "type": "module",
   "dependencies": {
     "axios": "^1.12.2",
     "cheerio": "^1.1.2"
+  },
+  "devDependencies": {
+    "electron": "^38.2.2",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.paulof9.booru-scrapper",
+    "productName": "Booru Scrapper",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!dist/**/*",
+      "!node_modules/**/*",
+      "!README.md",
+      "!.git/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }
