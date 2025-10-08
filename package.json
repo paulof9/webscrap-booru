@@ -23,7 +23,6 @@
   ],
   "author": {
     "name": "Paulo",
-    "email": "paulovfreire@yahoo.com",
     "url": "https://github.com/paulof9"
   },
   "license": "MIT",
@@ -61,7 +60,18 @@
       "category": "public.app-category.utilities"
     },
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "publisherName": "Paulo",
+      "verifyUpdateCodeSignature": false
     },
     "linux": {
       "target": "AppImage"

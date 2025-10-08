@@ -1,0 +1,160 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        default: 'v1.0.1'
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+    - name: Check out Git repository
+      uses: actions/checkout@v3
+
+    - name: Install Node.js and npm
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build for Linux
+      if: matrix.os == 'ubuntu-latest'
+      run: npm run build:linux
+
+    - name: Build for Windows
+      if: matrix.os == 'windows-latest'
+      run: npm run build:win
+
+    - name: Build for macOS
+      if: matrix.os == 'macos-latest'
+      run: npm run build:mac
+
+    - name: Upload Linux artifacts
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-build
+        path: |
+          dist/*.AppImage
+          dist/latest-linux.yml
+
+    - name: Upload Windows artifacts
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-build
+        path: |
+          dist/*.exe
+          dist/*.exe.blockmap
+          dist/latest.yml
+
+    - name: Upload macOS artifacts
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-build
+        path: |
+          dist/*.dmg
+          dist/*.dmg.blockmap
+          dist/latest-mac.yml
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Check out Git repository
+      uses: actions/checkout@v3
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.event.inputs.version || github.ref_name }}
+        release_name: 🖼️ Booru Scrapper ${{ github.event.inputs.version || github.ref_name }}
+        body: |
+          ## 🚀 New Release
+          
+          ### ✨ Features
+          - Real-time progress tracking with visual progress bar
+          - Cancellation support - stop scraping anytime  
+          - Clean, modern interface
+          - Batch image downloads from Safebooru
+          - Error handling with detailed feedback
+          - Download statistics (downloaded/skipped count)
+          
+          ### 📦 Downloads
+          - **Windows**: `Booru-Scrapper-Setup-*.exe` (Installer) or `Booru-Scrapper-*.exe` (Portable)
+          - **Linux**: `Booru-Scrapper-*.AppImage`
+          - **macOS**: `Booru-Scrapper-*.dmg`
+          
+          ### 🛠️ For Developers
+          ```bash
+          git clone https://github.com/paulof9/webscrap-booru.git
+          cd webscrap-booru  
+          npm install
+          npm start
+          ```
+        draft: false
+        prerelease: false
+
+    - name: Upload Linux Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./linux-build/Booru Scrapper-${{ github.event.inputs.version || github.ref_name }}.AppImage
+        asset_name: Booru-Scrapper-${{ github.event.inputs.version || github.ref_name }}.AppImage
+        asset_content_type: application/octet-stream
+
+    - name: Upload Windows Installer
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./windows-build/Booru Scrapper Setup *.exe
+        asset_name: Booru-Scrapper-Setup-${{ github.event.inputs.version || github.ref_name }}.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload Windows Portable
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./windows-build/Booru Scrapper *.exe
+        asset_name: Booru-Scrapper-Portable-${{ github.event.inputs.version || github.ref_name }}.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload macOS Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./macos-build/Booru Scrapper-*.dmg
+        asset_name: Booru-Scrapper-${{ github.event.inputs.version || github.ref_name }}.dmg
+        asset_content_type: application/octet-stream
