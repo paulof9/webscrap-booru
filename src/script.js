@@ -31,7 +31,7 @@ function createProgressElements() {
     
     status.appendChild(progressContainer);
     
-    // Add cancel button functionality
+    // Cancel button functionality
     const cancelBtn = document.getElementById('cancelBtn');
     cancelBtn.addEventListener('click', async () => {
         cancelBtn.disabled = true;
